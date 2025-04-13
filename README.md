@@ -1,162 +1,239 @@
 --[[
-    Script Completo - GS_Rails
-    Funcionalidades: Fly, Kill Aura, TP, Interface Mobile
-]]
+    GS_Rails - Menu Unificado com Minimizar e Salvamento
+--]]
+
+-- Inicializar getgenv()
+getgenv().GS_Rails_Config = getgenv().GS_Rails_Config or {}
 
 -- Serviços
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
--- Tela principal
-local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-ScreenGui.Name = "GS_Rails"
-ScreenGui.ResetOnSpawn = false
+-- Variáveis de Config
+local flyToggle = getgenv().GS_Rails_Config.flyToggle or false
+local flySpeed = getgenv().GS_Rails_Config.flySpeed or 50
+local auraToggle = getgenv().GS_Rails_Config.auraToggle or false
+local auraRadius = getgenv().GS_Rails_Config.auraRadius or 10
 
--- Função para criar janelas móveis
-local function createDraggableFrame(name, color, position)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 230, 0, 280)
-    frame.Position = position
-    frame.BackgroundColor3 = color
-    frame.BorderSizePixel = 0
-    frame.Name = name
-    frame.Active = true
-    frame.Draggable = true
-    frame.Parent = ScreenGui
+-- GUI
+local gui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+gui.Name = "GS_Rails"
+gui.ResetOnSpawn = false
 
-    local title = Instance.new("TextLabel", frame)
-    title.Size = UDim2.new(1, 0, 0, 30)
-    title.BackgroundTransparency = 1
-    title.Text = name
-    title.TextColor3 = Color3.new(1, 1, 1)
-    title.Font = Enum.Font.SourceSansBold
-    title.TextSize = 22
+-- Janela Principal
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 300, 0, 450)
+frame.Position = UDim2.new(0, 20, 0, 20)
+frame.BackgroundColor3 = Color3.fromRGB(90, 40, 140)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
 
-    return frame
+-- Minimizar
+local minimize = false
+local miniBtn = Instance.new("TextButton", frame)
+miniBtn.Size = UDim2.new(0, 30, 0, 30)
+miniBtn.Position = UDim2.new(1, -35, 0, 5)
+miniBtn.Text = "-"
+miniBtn.BackgroundColor3 = Color3.fromRGB(120, 80, 160)
+miniBtn.TextColor3 = Color3.new(1, 1, 1)
+miniBtn.MouseButton1Click:Connect(function()
+	minimize = not minimize
+	for _, child in pairs(frame:GetChildren()) do
+		if child:IsA("GuiObject") and child ~= miniBtn then
+			child.Visible = not minimize
+		end
+	end
+	miniBtn.Text = minimize and "+" or "-"
+end)
+
+-- Título
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 35)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "GS_Rails - Menu"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 24
+
+-- Layout
+local layout = Instance.new("UIListLayout", frame)
+layout.Padding = UDim.new(0, 8)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.VerticalAlignment = Enum.VerticalAlignment.Top
+
+-- Separador
+local function Spacer(height)
+	local s = Instance.new("Frame")
+	s.Size = UDim2.new(1, 0, 0, height)
+	s.BackgroundTransparency = 1
+	return s
 end
 
--- Fly
-local flyFrame = createDraggableFrame("Fly", Color3.fromRGB(95, 60, 160), UDim2.new(0, 10, 0, 10))
-local flying = false
-local speed = 50
+---------------------------------------------------------------
+-- FLY
+local flyTitle = Instance.new("TextLabel")
+flyTitle.Text = "Fly"
+flyTitle.Size = UDim2.new(1, -20, 0, 25)
+flyTitle.BackgroundTransparency = 1
+flyTitle.TextColor3 = Color3.new(1, 1, 1)
+flyTitle.Font = Enum.Font.SourceSansBold
+flyTitle.TextSize = 20
+flyTitle.TextXAlignment = Enum.TextXAlignment.Left
 
-local toggleFlyBtn = Instance.new("TextButton", flyFrame)
-toggleFlyBtn.Position = UDim2.new(0, 10, 0, 40)
-toggleFlyBtn.Size = UDim2.new(0, 100, 0, 30)
-toggleFlyBtn.Text = "Ativar Fly"
-toggleFlyBtn.BackgroundColor3 = Color3.fromRGB(120, 90, 200)
-toggleFlyBtn.TextColor3 = Color3.new(1, 1, 1)
-toggleFlyBtn.MouseButton1Click:Connect(function()
-    flying = not flying
-    toggleFlyBtn.Text = flying and "Desativar Fly" or "Ativar Fly"
+local flyBtn = Instance.new("TextButton")
+flyBtn.Size = UDim2.new(1, -20, 0, 30)
+flyBtn.Text = flyToggle and "Desativar Fly" or "Ativar Fly"
+flyBtn.BackgroundColor3 = Color3.fromRGB(130, 90, 200)
+flyBtn.TextColor3 = Color3.new(1, 1, 1)
+flyBtn.MouseButton1Click:Connect(function()
+	flyToggle = not flyToggle
+	flyBtn.Text = flyToggle and "Desativar Fly" or "Ativar Fly"
 end)
 
-local speedBox = Instance.new("TextBox", flyFrame)
-speedBox.Position = UDim2.new(0, 10, 0, 80)
-speedBox.Size = UDim2.new(0, 100, 0, 30)
-speedBox.Text = tostring(speed)
-speedBox.PlaceholderText = "Velocidade"
-
+local speedBox = Instance.new("TextBox")
+speedBox.Size = UDim2.new(1, -20, 0, 30)
+speedBox.PlaceholderText = "Velocidade do Fly"
+speedBox.Text = tostring(flySpeed)
+speedBox.BackgroundColor3 = Color3.fromRGB(150, 110, 220)
+speedBox.TextColor3 = Color3.new(1, 1, 1)
 speedBox.FocusLost:Connect(function()
-    local value = tonumber(speedBox.Text)
-    if value then speed = value end
+	local val = tonumber(speedBox.Text)
+	if val then flySpeed = val end
 end)
 
--- Fly Loop
 RunService.RenderStepped:Connect(function()
-    if flying and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local move = Vector3.new()
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then move = move + workspace.CurrentCamera.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then move = move - workspace.CurrentCamera.CFrame.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then move = move - workspace.CurrentCamera.CFrame.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then move = move + workspace.CurrentCamera.CFrame.RightVector end
-        LocalPlayer.Character:TranslateBy(move.Unit * speed * RunService.RenderStepped:Wait())
-    end
+	if flyToggle and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		local move = Vector3.zero
+		if UserInputService:IsKeyDown(Enum.KeyCode.W) then move += workspace.CurrentCamera.CFrame.LookVector end
+		if UserInputService:IsKeyDown(Enum.KeyCode.S) then move -= workspace.CurrentCamera.CFrame.LookVector end
+		if UserInputService:IsKeyDown(Enum.KeyCode.A) then move -= workspace.CurrentCamera.CFrame.RightVector end
+		if UserInputService:IsKeyDown(Enum.KeyCode.D) then move += workspace.CurrentCamera.CFrame.RightVector end
+		LocalPlayer.Character:TranslateBy(move.Unit * flySpeed * RunService.RenderStepped:Wait())
+	end
 end)
 
--- Kill Aura
-local killAuraFrame = createDraggableFrame("Kill Aura", Color3.fromRGB(120, 40, 120), UDim2.new(0, 250, 0, 10))
-local killAuraEnabled = false
-local killRadius = 10
+---------------------------------------------------------------
+-- KILL AURA
+local auraPart = Instance.new("Part")
+auraPart.Anchored = true
+auraPart.CanCollide = false
+auraPart.Shape = Enum.PartType.Ball
+auraPart.Material = Enum.Material.Neon
+auraPart.Color = Color3.fromRGB(255, 0, 255)
+auraPart.Transparency = 0.5
+auraPart.Size = Vector3.new(auraRadius * 2, auraRadius * 2, auraRadius * 2)
+auraPart.Parent = workspace
 
-local toggleKillBtn = Instance.new("TextButton", killAuraFrame)
-toggleKillBtn.Position = UDim2.new(0, 10, 0, 40)
-toggleKillBtn.Size = UDim2.new(0, 100, 0, 30)
-toggleKillBtn.Text = "Ativar Aura"
-toggleKillBtn.BackgroundColor3 = Color3.fromRGB(150, 80, 180)
-toggleKillBtn.TextColor3 = Color3.new(1, 1, 1)
+local auraTitle = Instance.new("TextLabel")
+auraTitle.Text = "Kill Aura"
+auraTitle.Size = UDim2.new(1, -20, 0, 25)
+auraTitle.BackgroundTransparency = 1
+auraTitle.TextColor3 = Color3.new(1, 1, 1)
+auraTitle.Font = Enum.Font.SourceSansBold
+auraTitle.TextSize = 20
+auraTitle.TextXAlignment = Enum.TextXAlignment.Left
 
-toggleKillBtn.MouseButton1Click:Connect(function()
-    killAuraEnabled = not killAuraEnabled
-    toggleKillBtn.Text = killAuraEnabled and "Desativar Aura" or "Ativar Aura"
+local auraBtn = Instance.new("TextButton")
+auraBtn.Size = UDim2.new(1, -20, 0, 30)
+auraBtn.Text = auraToggle and "Desativar Kill Aura" or "Ativar Kill Aura"
+auraBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 200)
+auraBtn.TextColor3 = Color3.new(1, 1, 1)
+auraBtn.MouseButton1Click:Connect(function()
+	auraToggle = not auraToggle
+	auraBtn.Text = auraToggle and "Desativar Kill Aura" or "Ativar Kill Aura"
 end)
 
-local radiusBox = Instance.new("TextBox", killAuraFrame)
-radiusBox.Position = UDim2.new(0, 10, 0, 80)
-radiusBox.Size = UDim2.new(0, 100, 0, 30)
-radiusBox.Text = tostring(killRadius)
-radiusBox.PlaceholderText = "Raio"
-
+local radiusBox = Instance.new("TextBox")
+radiusBox.Size = UDim2.new(1, -20, 0, 30)
+radiusBox.PlaceholderText = "Raio da Aura"
+radiusBox.Text = tostring(auraRadius)
+radiusBox.BackgroundColor3 = Color3.fromRGB(170, 80, 220)
+radiusBox.TextColor3 = Color3.new(1, 1, 1)
 radiusBox.FocusLost:Connect(function()
-    local value = tonumber(radiusBox.Text)
-    if value then killRadius = value end
+	local val = tonumber(radiusBox.Text)
+	if val then auraRadius = val end
 end)
 
--- Kill Aura Visual
-local auraVisual = Instance.new("Part")
-auraVisual.Anchored = true
-auraVisual.CanCollide = false
-auraVisual.Shape = Enum.PartType.Ball
-auraVisual.Color = Color3.fromRGB(255, 0, 255)
-auraVisual.Transparency = 0.6
-auraVisual.Material = Enum.Material.Neon
-auraVisual.Size = Vector3.new(killRadius * 2, killRadius * 2, killRadius * 2)
-auraVisual.Parent = workspace
-
--- Kill Aura Loop
 RunService.RenderStepped:Connect(function()
-    if killAuraEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        auraVisual.Position = LocalPlayer.Character.HumanoidRootPart.Position
-        auraVisual.Size = Vector3.new(killRadius * 2, killRadius * 2, killRadius * 2)
-        for _, v in pairs(Players:GetPlayers()) do
-            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                local dist = (v.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-                if dist <= killRadius then
-                    v.Character:BreakJoints()
-                end
-            end
-        end
-    else
-        auraVisual.Position = Vector3.new(0, -100, 0)
-    end
+	if auraToggle and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		auraPart.Position = LocalPlayer.Character.HumanoidRootPart.Position
+		auraPart.Size = Vector3.new(auraRadius * 2, auraRadius * 2, auraRadius * 2)
+		for _, player in pairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				local dist = (player.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+				if dist <= auraRadius then
+					player.Character:BreakJoints()
+				end
+			end
+		end
+	else
+		auraPart.Position = Vector3.new(0, -100, 0)
+	end
 end)
 
--- TP
-local tpFrame = createDraggableFrame("Teleport", Color3.fromRGB(60, 20, 90), UDim2.new(0, 10, 0, 300))
-local tpBox = Instance.new("TextBox", tpFrame)
-tpBox.Position = UDim2.new(0, 10, 0, 40)
-tpBox.Size = UDim2.new(0, 200, 0, 30)
-tpBox.PlaceholderText = "Nome do jogador ou NPC"
+---------------------------------------------------------------
+-- TELEPORT
+local tpTitle = Instance.new("TextLabel")
+tpTitle.Text = "Teleport"
+tpTitle.Size = UDim2.new(1, -20, 0, 25)
+tpTitle.BackgroundTransparency = 1
+tpTitle.TextColor3 = Color3.new(1, 1, 1)
+tpTitle.Font = Enum.Font.SourceSansBold
+tpTitle.TextSize = 20
+tpTitle.TextXAlignment = Enum.TextXAlignment.Left
 
-local tpBtn = Instance.new("TextButton", tpFrame)
-tpBtn.Position = UDim2.new(0, 10, 0, 80)
-tpBtn.Size = UDim2.new(0, 100, 0, 30)
+local tpBox = Instance.new("TextBox")
+tpBox.Size = UDim2.new(1, -20, 0, 30)
+tpBox.PlaceholderText = "Nome do NPC ou jogador"
+tpBox.BackgroundColor3 = Color3.fromRGB(130, 70, 200)
+tpBox.TextColor3 = Color3.new(1, 1, 1)
+
+local tpBtn = Instance.new("TextButton")
+tpBtn.Size = UDim2.new(1, -20, 0, 30)
 tpBtn.Text = "Teleportar"
-tpBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 130)
+tpBtn.BackgroundColor3 = Color3.fromRGB(150, 60, 220)
 tpBtn.TextColor3 = Color3.new(1, 1, 1)
-
 tpBtn.MouseButton1Click:Connect(function()
-    local name = tpBox.Text:lower()
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v:IsA("Model") and v:FindFirstChild("HumanoidRootPart") and v.Name:lower():find(name) then
-            LocalPlayer.Character:MoveTo(v.HumanoidRootPart.Position + Vector3.new(0, 5, 0))
-            break
-        end
-    end
+	local name = tpBox.Text:lower()
+	for _, obj in pairs(workspace:GetDescendants()) do
+		if obj:IsA("Model") and obj:FindFirstChild("HumanoidRootPart") and obj.Name:lower():find(name) then
+			LocalPlayer.Character:MoveTo(obj.HumanoidRootPart.Position + Vector3.new(0, 5, 0))
+			break
+		end
+	end
 end)
 
--- Fim do Script
+---------------------------------------------------------------
+-- SALVAR CONFIGURAÇÕES
+local saveBtn = Instance.new("TextButton")
+saveBtn.Size = UDim2.new(1, -20, 0, 35)
+saveBtn.Text = "Salvar Configurações"
+saveBtn.BackgroundColor3 = Color3.fromRGB(110, 40, 190)
+saveBtn.TextColor3 = Color3.new(1, 1, 1)
+saveBtn.MouseButton1Click:Connect(function()
+	getgenv().GS_Rails_Config = {
+		flyToggle = flyToggle,
+		flySpeed = flySpeed,
+		auraToggle = auraToggle,
+		auraRadius = auraRadius
+	}
+end)
+
+---------------------------------------------------------------
+-- Inserir na GUI
+local elements = {
+	Spacer(5),
+	flyTitle, flyBtn, speedBox,
+	Spacer(10),
+	auraTitle, auraBtn, radiusBox,
+	Spacer(10),
+	tpTitle, tpBox, tpBtn,
+	Spacer(10),
+	saveBtn
+}
+for _, e in pairs(elements) do e.Parent = frame end
