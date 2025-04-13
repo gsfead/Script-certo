@@ -1,38 +1,30 @@
---[[
-    GS_Rails - Menu Unificado com Minimizar e Salvamento
---]]
+-- GS_Rails - Menu Unificado
 
--- Inicializar getgenv()
 getgenv().GS_Rails_Config = getgenv().GS_Rails_Config or {}
 
--- Serviços
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
--- Variáveis de Config
 local flyToggle = getgenv().GS_Rails_Config.flyToggle or false
 local flySpeed = getgenv().GS_Rails_Config.flySpeed or 50
 local auraToggle = getgenv().GS_Rails_Config.auraToggle or false
 local auraRadius = getgenv().GS_Rails_Config.auraRadius or 10
 
--- GUI
 local gui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
 gui.Name = "GS_Rails"
 gui.ResetOnSpawn = false
 
--- Janela Principal
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 300, 0, 450)
+frame.Size = UDim2.new(0, 300, 0, 500)
 frame.Position = UDim2.new(0, 20, 0, 20)
 frame.BackgroundColor3 = Color3.fromRGB(90, 40, 140)
 frame.BorderSizePixel = 0
 frame.Active = true
 frame.Draggable = true
 
--- Minimizar
 local minimize = false
 local miniBtn = Instance.new("TextButton", frame)
 miniBtn.Size = UDim2.new(0, 30, 0, 30)
@@ -50,7 +42,6 @@ miniBtn.MouseButton1Click:Connect(function()
 	miniBtn.Text = minimize and "+" or "-"
 end)
 
--- Título
 local title = Instance.new("TextLabel", frame)
 title.Size = UDim2.new(1, 0, 0, 35)
 title.Position = UDim2.new(0, 0, 0, 0)
@@ -60,13 +51,11 @@ title.TextColor3 = Color3.new(1, 1, 1)
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 24
 
--- Layout
 local layout = Instance.new("UIListLayout", frame)
 layout.Padding = UDim.new(0, 8)
 layout.SortOrder = Enum.SortOrder.LayoutOrder
 layout.VerticalAlignment = Enum.VerticalAlignment.Top
 
--- Separador
 local function Spacer(height)
 	local s = Instance.new("Frame")
 	s.Size = UDim2.new(1, 0, 0, height)
@@ -74,8 +63,7 @@ local function Spacer(height)
 	return s
 end
 
----------------------------------------------------------------
--- FLY
+-- Fly
 local flyTitle = Instance.new("TextLabel")
 flyTitle.Text = "Fly"
 flyTitle.Size = UDim2.new(1, -20, 0, 25)
@@ -117,8 +105,7 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
----------------------------------------------------------------
--- KILL AURA
+-- Kill Aura
 local auraPart = Instance.new("Part")
 auraPart.Anchored = true
 auraPart.CanCollide = false
@@ -176,8 +163,7 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
----------------------------------------------------------------
--- TELEPORT
+-- Teleport
 local tpTitle = Instance.new("TextLabel")
 tpTitle.Text = "Teleport"
 tpTitle.Size = UDim2.new(1, -20, 0, 25)
@@ -208,8 +194,7 @@ tpBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
----------------------------------------------------------------
--- SALVAR CONFIGURAÇÕES
+-- Botão de salvar configurações
 local saveBtn = Instance.new("TextButton")
 saveBtn.Size = UDim2.new(1, -20, 0, 35)
 saveBtn.Text = "Salvar Configurações"
@@ -224,8 +209,19 @@ saveBtn.MouseButton1Click:Connect(function()
 	}
 end)
 
----------------------------------------------------------------
--- Inserir na GUI
+-- Botão Lomu Hub
+local lomuBtn = Instance.new("TextButton")
+lomuBtn.Size = UDim2.new(1, -20, 0, 35)
+lomuBtn.Text = "Abrir Lomu Hub"
+lomuBtn.BackgroundColor3 = Color3.fromRGB(100, 30, 180)
+lomuBtn.TextColor3 = Color3.new(1, 1, 1)
+lomuBtn.Font = Enum.Font.SourceSansBold
+lomuBtn.TextSize = 18
+lomuBtn.MouseButton1Click:Connect(function()
+	loadstring(game:HttpGet('https://raw.githubusercontent.com/notyourfavorite1/lomuhubmain/refs/heads/main/main.txt', true))()
+end)
+
+-- Adicionar elementos ao menu
 local elements = {
 	Spacer(5),
 	flyTitle, flyBtn, speedBox,
@@ -234,6 +230,9 @@ local elements = {
 	Spacer(10),
 	tpTitle, tpBox, tpBtn,
 	Spacer(10),
-	saveBtn
+	saveBtn,
+	lomuBtn
 }
-for _, e in pairs(elements) do e.Parent = frame end
+for _, e in pairs(elements) do
+	e.Parent = frame
+end
